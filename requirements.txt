@@ -1,8 +1,8 @@
 fastapi==0.118.0
 uvicorn[standard]==0.37.0
 pillow>=10.3.0
-opencv-python-headless==4.9.0.80
-mediapipe==0.10.14
+opencv-python-headless==4.9.0.80  # Use headless to avoid GUI issues on server
+mediapipe==0.10.14  # Use a version that's compatible with Python 3.10
 numpy==1.26.4
 scipy==1.11.4
 pymongo
