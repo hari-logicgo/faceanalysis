@@ -13,7 +13,7 @@ import gridfs
 from scipy.spatial import distance as dist
 
 # ------------------ Load Environment ------------------
-MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+MONGO_URL = os.environ.get("MONGO_URL")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 # ------------------ MongoDB Setup ------------------
