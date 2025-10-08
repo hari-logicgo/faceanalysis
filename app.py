@@ -11,7 +11,7 @@ import numpy as np
 from pymongo import MongoClient
 import gridfs
 from scipy.spatial import distance as dist
-
+from bson import ObjectId 
 # ------------------ Load Environment ------------------
 MONGO_URL = os.environ.get("MONGO_URL")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -21,7 +21,16 @@ client = MongoClient(MONGO_URL)
 db = client["beautygan_db"]
 fs = gridfs.GridFS(db)
 logs_collection = db["analysis_logs"]
-
+# Serialize MongoDB ObjectId for JSON responses
+def serialize_objectid(data):
+    """Convert MongoDB ObjectId to string."""
+    if isinstance(data, ObjectId):
+        return str(data)
+    if isinstance(data, dict):
+        return {k: serialize_objectid(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [serialize_objectid(item) for item in data]
+    return data
 # ------------------ Optional Groq Client ------------------
 try:
     from groq import Groq
@@ -608,18 +617,29 @@ app = FastAPI(title="Advanced Facial Analysis API")
 @app.post("/analyze/facial_features")
 async def analyze_facial_features(file: UploadFile = File(...)):
     try:
+        if client is None:
+            raise Exception("MongoDB connection is unavailable.")
+        
         img = Image.open(file.file).convert("RGB")
         img_id = save_image_to_gridfs(img)
         results = analyze_face_complete(img)
+        
+        # Serialize ObjectId fields in the results before returning
+        results = serialize_objectid(results)
         results["source_image_id"] = img_id
         log_analysis(results)
         return JSONResponse(results)
     except Exception as e:
-        return JSONResponse({"error": str(e), "trace": traceback.format_exc()})
+        error_message = str(e)
+        # Additional logging can be done here for debugging
+        return JSONResponse({"error": error_message, "trace": traceback.format_exc()})
 
 @app.post("/analyze/ai_wellness")
 async def analyze_ai_wellness(file: UploadFile = File(...)):
     try:
+        if client is None:
+            raise Exception("MongoDB connection is unavailable.")
+        
         img = Image.open(file.file).convert("RGB")
         img_id = save_image_to_gridfs(img)
         results = analyze_face_complete(img)
@@ -628,8 +648,10 @@ async def analyze_ai_wellness(file: UploadFile = File(...)):
         log_analysis({"ai_feedback": ai_feedback, "source_image_id": img_id})
         return JSONResponse(ai_feedback)
     except Exception as e:
-        return JSONResponse({"error": str(e), "trace": traceback.format_exc()})
-
+        error_message = str(e)
+        # Additional logging can be done here for debugging
+        return JSONResponse({"error": error_message, "trace": traceback.format_exc()})
+    
 @app.get("/")
 def root():
-    return {"message":"Welcome to Advanced Facial Analysis API"}
+    return {"message": "Welcome to Advanced Facial Analysis API"}
