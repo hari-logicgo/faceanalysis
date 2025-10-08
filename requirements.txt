@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pillow>=10.3.0
+opencv-python
+mediapipe
+numpy
+scipy
+pymongo
+gridfs
+groq
