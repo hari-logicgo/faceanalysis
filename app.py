@@ -3,6 +3,7 @@ import os
 import io
 import json
 import traceback
+from copy import deepcopy
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 from PIL import Image, ImageOps
@@ -609,7 +610,7 @@ def save_image_to_gridfs(img: Image.Image):
     return str(file_id)
 
 def log_analysis(data: dict):
-    logs_collection.insert_one(data)
+    logs_collection.insert_one(deepcopy(data))
 
 # ------------------ FastAPI App ------------------
 app = FastAPI(title="Advanced Facial Analysis API")
@@ -628,6 +629,7 @@ async def analyze_facial_features(file: UploadFile = File(...)):
         results = serialize_objectid(results)
         results["source_image_id"] = img_id
         log_analysis(results)
+        results.pop("_id", None)
         return JSONResponse(results)
     except Exception as e:
         error_message = str(e)
